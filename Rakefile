@@ -19,7 +19,7 @@ Jeweler::Tasks.new do |gem|
   gem.license = "LGPL"
   gem.summary = "Pipeline to remove contaminations from EST libraries"
   gem.description = "Coming soon"
-  gem.email = "github@volton.otherinbox.com"
+  gem.email = "philipp.comans@googlemail.com"
   gem.authors = ["Philipp Comans"]
   # Remove test data from the gem
   gem.files.exclude "test/data/**/*"
