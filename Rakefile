@@ -18,7 +18,7 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/pcomans/bioruby-phyta"
   gem.license = "LGPL"
   gem.summary = "Pipeline to remove contaminations from EST libraries"
-  gem.description = "Coming soon"
+  gem.description = "Pipeline to remove contaminations from EST libraries"
   gem.email = "philipp.comans@googlemail.com"
   gem.authors = ["Philipp Comans"]
   # Remove test data from the gem
