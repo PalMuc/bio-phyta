@@ -48,9 +48,10 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 require 'kingdom_db'
 require 'blast_string_parser'
-require 'kingdom-assignment/version'
 
-puts "Running Kingdom Assignment " +  Kingdom::Assignment::VERSION.to_s
+File.exist?('../VERSION') do
+  "Running Kingdom Assignment #{File.read('../VERSION')})"
+end
 
 puts "Settings: " + opts.inspect
 
