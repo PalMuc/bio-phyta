@@ -15,7 +15,7 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "bio-phyta"
-  gem.homepage = "http://github.com/pcomans/bioruby-phyta"
+  gem.homepage = "https://github.com/PalMuc/bio-phyta"
   gem.license = "LGPL"
   gem.summary = "Pipeline to remove contaminations from EST libraries"
   gem.description = "Pipeline to remove contaminations from EST libraries"
