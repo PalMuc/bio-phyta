@@ -21,6 +21,8 @@ Jeweler::Tasks.new do |gem|
   gem.description = "Coming soon"
   gem.email = "github@volton.otherinbox.com"
   gem.authors = ["Philipp Comans"]
+  # Remove test data from the gem
+  gem.files.exclude "test/data/**/*"
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
