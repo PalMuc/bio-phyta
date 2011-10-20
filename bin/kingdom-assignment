@@ -3,6 +3,8 @@
 require 'rubygems'
 require 'trollop'
 
+SCRIPT_NAME = "phyta-assign"
+
 #parse command line arguments
 opts = Trollop::options do
   opt :input_file, "The output of the BLASTplus alignment in XML format", :type => String
@@ -49,9 +51,9 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'kingdom_db'
 require 'blast_string_parser'
 
-File.exist?('../VERSION') do
-  "Running Kingdom Assignment #{File.read('../VERSION')})"
-end
+rootpath = File.dirname(File.dirname(__FILE__))
+PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
+puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
 
 puts "Settings: " + opts.inspect
 
