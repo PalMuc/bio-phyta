@@ -3,6 +3,8 @@
 require 'rubygems'
 require 'csv' #Will use FasterCSV on Ruby 1.8
 
+SCRIPT_NAME = "phyta-split"
+
 # $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
@@ -14,8 +16,12 @@ else
   INSTALLED_CSV = CSV
 end
 
+rootpath = File.dirname(File.dirname(__FILE__))
+PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
+puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
+
 unless ARGV.size == 1
-  puts "Usage: kingdom-splitter input.csv"
+  puts "Usage: #{SCRIPT_NAME} input.csv"
   puts "This will automatically create input_clean.csv and input_contaminated.csv in the same directory."
   exit
 end

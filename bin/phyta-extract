@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+SCRIPT_NAME = "phyta-extract"
+
 def table_to_set(table, header)
   result = Set.new()
   table.each do |current_row|
@@ -31,9 +33,10 @@ require 'rubygems'
 require 'csv'
 require 'set'
 require 'bio'
-require 'kingdom-extraction/version'
 
-puts "Running Kingdom-Extraction " +  Kingdom::Extraction::VERSION.to_s
+rootpath = File.dirname(File.dirname(__FILE__))
+PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
+puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
 
 settings[:input_fasta] = ARGV.shift
 settings[:input_clean] = ARGV.shift
