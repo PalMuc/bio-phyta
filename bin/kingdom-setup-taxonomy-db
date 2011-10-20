@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'net/ftp'
+require 'tmpdir'
+
+require 'trollop'
+require 'sequel'
+
+#parse command line arguments
+opts = Trollop::options do
+  opt :database_server, "Optional: The address of the MySQL database server", :type => String, :default => "localhost"
+  opt :database_user, "Optional: The name of the database user", :type => String, :default => "root", :short => "-u"
+  opt :database_password, "Optional: The password of the database user", :type => String, :default => "no password", :short => "-p"
+  opt :database_name, "Optional: The name of the NCBI taxonomy database", :type => String, :default => "kingdom_assignment_taxonomy", :short => "-n"
+end
+
+unless opts[:database_password_given]
+  opts[:database_password] = nil
+end
+
+#Connect to the target database
+connect_string = 'mysql://'+ opts[:database_server] + '/' + opts[:database_name] + '?user=' + opts[:database_user]
+
+if !opts[:database_password].nil?
+  connect_string = connect_string + '&password=' + opts[:database_password]
+end
+
+if RUBY_PLATFORM =~ /java/
+  #This is JRuby, using jdbc
+  require 'jdbc/mysql'
+  connect_string = 'jdbc:' + connect_string
+else
+  require 'mysql'
+end
+
+PROTEIN_TABLE_NAME = 'proteinGiToTaxonId'
+NAMES_TABLE_NAME = 'names'
+NODES_TABLE_NAME = 'nodes'
+
+database = Sequel.connect(connect_string)
+
+#Test the database connection
+#Better fail now than after downloading all that stuff from the NCBI webservers
+begin
+  database.run "SHOW TABLES"
+rescue Sequel::DatabaseConnectionError => e
+  abort "Could not connect to database: #{e.message}"
+end
+
+#Connect to the NCBI taxonomy db
+ftp = Net::FTP.new('ftp.ncbi.nih.gov')
+ftp.login
+files = ftp.chdir('pub/taxonomy/')
+
+#Do the following in a temporary directory, automatically delete it afterwards
+Dir.mktmpdir do |dir|
+  Dir.chdir(dir)
+
+  tax_dmp = 'taxdump.tar.gz'
+  puts "Downloading #{tax_dmp}... "
+  ftp.getbinaryfile(tax_dmp, tax_dmp)
+  taxdump_md5 = ftp.gettextfile(tax_dmp + ".md5")
+  #TODO validate checksum
+  
+  prot_dmp = 'gi_taxid_prot.dmp.gz'
+  puts "Downloading #{prot_dmp}... "
+  ftp.getbinaryfile(prot_dmp, prot_dmp)
+
+  puts "Extracting files..."
+  `tar -xzf #{tax_dmp}`
+  `gunzip #{prot_dmp}`
+
+  # The following is taken from
+  # http://bergelson.uchicago.edu/Members/mhorton/taxonomydb.build
+
+  puts "Populating database tables..."
+  database.drop_table(PROTEIN_TABLE_NAME) if database.table_exists?(PROTEIN_TABLE_NAME)
+  
+  database.run "CREATE TABLE #{PROTEIN_TABLE_NAME} (
+gi INT UNSIGNED NOT NULL,
+taxonid INT UNSIGNED NOT NULL,
+
+PRIMARY KEY(gi)
+) engine=innodb charset=utf8;"
+
+  database.drop_table(NAMES_TABLE_NAME) if database.table_exists?(NAMES_TABLE_NAME)
+
+  database.run "CREATE TABLE #{NAMES_TABLE_NAME} (
+taxonid MEDIUMINT(11) UNSIGNED NOT NULL, 
+name VARCHAR(200) NOT NULL, 
+uniquename VARCHAR(100) DEFAULT NULL,
+class VARCHAR(50) NOT NULL DEFAULT '',
+
+  KEY taxonid (taxonid), KEY type (class), KEY name (name)
+                                   ) ENGINE=INNODB CHARSET=UTF8;"
+
+database.drop_table(NODES_TABLE_NAME) if database.table_exists?(NODES_TABLE_NAME)
+
+database.run "CREATE TABLE #{NODES_TABLE_NAME} (
+taxonid mediumint(8) unsigned NOT NULL,
+parenttaxonid mediumint(8) unsigned NOT NULL,
+rank varchar(50) default NULL,
+embl_code varchar(20) default NULL,
+division_id smallint(6) NOT NULL,
+inherited_div_flag tinyint(1) unsigned NOT NULL,
+genetic_code_id smallint(6) NOT NULL,
+inherited_gc_flag tinyint(1) unsigned NOT NULL,
+mitochondrial_genetic_codeid smallint(6) NOT NULL,
+inherited_mgc_flag tinyint(1) unsigned NOT NULL,
+genbank_hidden_flag tinyint(1) unsigned NOT NULL,
+hidden_subtree_root_flag tinyint(1) unsigned NOT NULL,
+comments varchar(255) default NULL,
+
+PRIMARY KEY  (taxonid), KEY parenttaxonid (parenttaxonid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8"
+
+database.run "TRUNCATE #{NAMES_TABLE_NAME}"
+database.run "TRUNCATE #{NODES_TABLE_NAME}"
+database.run "TRUNCATE #{PROTEIN_TABLE_NAME}"
+
+database.run "LOAD DATA INFILE '#{dir}/gi_taxid_prot.dmp' INTO TABLE #{PROTEIN_TABLE_NAME} FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' (gi,taxonid);"
+
+database.run "LOAD DATA INFILE '#{dir}/names.dmp' INTO TABLE #{NAMES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, name, uniquename, class);"
+
+database.run "LOAD DATA INFILE '#{dir}/nodes.dmp' INTO TABLE #{NODES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, parenttaxonid,rank,embl_code,division_id,inherited_div_flag,genetic_code_id,inherited_gc_flag, mitochondrial_genetic_codeid,inherited_mgc_flag,genBank_hidden_flag,hidden_subtree_root_flag,comments);"
+
+end
+
+puts "done!"
+ftp.close

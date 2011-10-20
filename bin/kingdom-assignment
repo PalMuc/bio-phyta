@@ -1,0 +1,172 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'trollop'
+
+#parse command line arguments
+opts = Trollop::options do
+  opt :input_file, "The output of the BLASTplus alignment in XML format", :type => String
+  opt :output_file, "The name of the output table in CSV format", :type => String
+  opt :database_server, "Optional: The address of the MySQL database server", :type => String, :default => "localhost"
+  opt :database_user, "Optional: The name of the database user", :type => String, :default => "root", :short => "-u"
+  opt :database_password, "Optional: The password of the database user", :type => String, :default => "no password", :short => "-p"
+  opt :database_name, "Optional: The name of the NCBI taxonomy database", :type => String, :default => "kingdom_assignment_taxonomy", :short => "-n"
+end
+
+unless opts[:input_file_given] && opts[:output_file_given]
+  puts "Invalid arguments, see --help for more information."
+  abort
+end
+
+unless opts[:database_password_given]
+  opts[:database_password] = nil
+end
+
+#Use the correct database connector
+if RUBY_PLATFORM =~ /java/
+  puts "You are running JRuby, the jdbc/mysql database connector will be used."
+  require 'jdbc/mysql'
+else
+  require 'mysql'
+end
+
+require 'sequel'
+require 'nokogiri'
+require 'bio'
+
+require 'csv'
+
+if CSV.const_defined? :Reader
+  require 'fastercsv'
+  INSTALLED_CSV = FasterCSV
+else
+  INSTALLED_CSV = CSV
+end
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
+require 'kingdom_db'
+require 'blast_string_parser'
+require 'kingdom-assignment/version'
+
+puts "Running Kingdom Assignment " +  Kingdom::Assignment::VERSION.to_s
+
+puts "Settings: " + opts.inspect
+
+#Initialize auxiliary classes
+
+blast_parser = BlastStringParser.new()
+
+#Open input file
+
+unless File.exists?(opts[:input_file])
+  puts "The input file at " + File.expand_path(opts[:input_file]) + " could not be opened!"
+  exit
+end
+
+file = File.new(opts[:input_file])
+reader = Nokogiri::XML::Reader(file)
+
+#Initialize database
+db = KingdomDB.new(opts[:database_server], opts[:database_user], opts[:database_password], opts[:database_name])
+
+#Initialize output file
+
+if File.exists?(opts[:output_file])
+  puts "The output file at " + File.expand_path(opts[:output_file]) + " already exists!"
+  exit
+end
+output = INSTALLED_CSV.open(opts[:output_file], "w", {
+                              :col_sep => ";",
+                              :headers => ["query sequence id", "hit accession number", "sgi", "evalue", "species", "subject annotation", "subject score", "kingdom"],
+                              :write_headers => true})
+
+filter_array = [
+                "Bacteria",
+                "Archaea",
+                "Viridiplantae",
+                "Rhodophyta",
+                "Glaucocystophyceae",
+                "Alveolata",
+                "Cryptophyta",
+                "stramenopiles", #<- Change
+                "Amoebozoa",
+                "Apusozoa",
+                "Euglenozoa",
+                "Fornicata",
+                "Haptophyceae",
+                "Heterolobosea",
+                "Jakobida",
+                "Katablepharidophyta",
+                "Malawimonadidae",
+                "Nucleariidae",
+                "Oxymonadida",
+                "Parabasalia",
+                "Rhizaria",
+                "unclassified eukaryotes",
+                "Fungi",
+                "Metazoa",
+                "Choanoflagellida",
+                "Opisthokonta incertae sedis", #"Fungi/Metazoa incertae sedis"
+                "Viruses"
+               ]
+
+filter_hash = db.get_filter(filter_array)
+
+current_query = ""
+hit_id = ""
+hit_def = ""
+hit_accession = ""
+hsp_evalue = ""
+subject_score = ""
+kingdom = ""
+
+#Go through the XML with a pull-parser
+reader.each do |elem|
+
+  if elem.name == "Iteration_query-def"&& elem.node_type == Nokogiri::XML::Node::ELEMENT_NODE
+    #We are at the beginning of an iteration
+    current_query = elem.inner_xml
+
+  elsif elem.name == "Hit" && elem.node_type == Nokogiri::XML::Node::ELEMENT_NODE
+    #We are at the beginning of a Hit
+    #Load the node representing this hit into memory and extract required information
+    hit = Nokogiri::XML(elem.outer_xml)
+    hit_id = hit.xpath("//Hit_id").inner_text
+    hit_def = hit.xpath("//Hit_def").inner_text
+    hit_accession = hit.xpath("//Hit_accession").inner_text
+    hsp_evalue = hit.xpath("//Hsp[1]/Hsp_evalue").inner_text.to_f #Yep, the first element really has number 1
+    subject_score = hit.xpath("//Hsp[1]/Hsp_bit-score").inner_text.to_f #Set the subject score to be the bit-score of the first HSP
+    subject_gi = blast_parser.get_sgi_info(hit_id)
+
+    species_name = nil
+
+    begin
+      species_name = blast_parser.get_species_name(hit_def)
+    rescue RuntimeError
+      puts "Can not find " + hit_def.to_s[0..20] + "..."
+      begin
+        species_name = db.name_from_gi(subject_gi)      
+      rescue RuntimeError
+        puts "ERROR: Could not find gi " + subject_gi.to_s
+      end
+    end
+
+    begin
+      kingdom = db.match_filter(species_name, filter_hash)
+    rescue RuntimeError
+      kingdom = "NOT FOUND"
+    end
+    if kingdom.nil?
+      kingdom = "NONE"
+    end
+
+    output << [blast_parser.get_query_seq(current_query), hit_accession, subject_gi, hsp_evalue, species_name, blast_parser.get_subject_annotation(hit_def), subject_score, kingdom]
+
+  end
+
+end
+
+output.close
+puts "Parsing finished!"

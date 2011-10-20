@@ -1,0 +1,152 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'csv' #Will use FasterCSV on Ruby 1.8
+
+# $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
+#CSV backwards compatibility
+if CSV.const_defined? :Reader
+  require 'fastercsv'
+  INSTALLED_CSV = FasterCSV
+else
+  INSTALLED_CSV = CSV
+end
+
+unless ARGV.size == 1
+  puts "Usage: kingdom-splitter input.csv"
+  puts "This will automatically create input_clean.csv and input_contaminated.csv in the same directory."
+  exit
+end
+
+#Command line arguments
+settings = {}
+settings[:input_file] =  ARGV.shift
+
+#Set up output file
+fullpath = File.expand_path(settings[:input_file])
+suffix = File.extname(fullpath)
+dirname = File.dirname(fullpath)
+name = File.basename(fullpath, suffix)
+
+settings[:contaminated_file] = dirname + "/" + name + "_contaminated.csv"
+settings[:clean_file] = dirname + "/" + name + "_clean.csv"
+
+csv_header = ["query sequence id", "hit accession number", "sgi", "evalue", "species", "subject annotation", "subject score", "kingdom"]
+
+#Open input file
+if !File.file?(settings[:input_file])
+  puts "No input file at " + File.expand_path(settings[:input_file]) + "!"
+  exit
+end
+input = INSTALLED_CSV.open(settings[:input_file], "r", {
+                   :col_sep => ";",
+                   :headers => :first_row,
+                   :header_converters => :symbol})
+
+clean_seqs = {}
+contaminated_seqs = {}
+contaminated_filter = [
+                       "Bacteria",
+                       "Archaea",
+                       "Viruses",
+                       "NONE"
+                       #TODO is this all?
+                      ]
+
+warning = false;
+
+input.each do |current_row|
+  
+  seqid   = current_row[:query_sequence_id]
+  kingdom = current_row[:kingdom]
+
+  if !warning
+    if current_row[:evalue].include? ','
+      puts "***************** Warning *****************"
+      puts "This program will produce incorrect output"
+      puts "if a comma is used as a decimal divider!"
+      puts "*******************************************"
+      warning = true
+    end
+  end
+    
+  seq_is_in_clean            = clean_seqs.has_key?(seqid)
+  seq_is_in_contaminated     = contaminated_seqs.has_key?(seqid)
+  kingdom_is_in_contaminated = contaminated_filter.include?(kingdom)
+  
+  if seq_is_in_clean && seq_is_in_contaminated
+    
+    puts "Something went wrong"
+    exit
+    
+  elsif !seq_is_in_clean && !seq_is_in_contaminated
+    
+    #Seq is not yet in any of the lists
+    if kingdom_is_in_contaminated
+      contaminated_seqs[seqid] = current_row
+    else
+      clean_seqs[seqid] = current_row
+    end
+    
+  elsif seq_is_in_clean
+    
+    #Seqs go into clean when they have one hit that's not in the contaminated filter
+    #Make sure the seq in the hash has the lower evalue
+    if clean_seqs[seqid][:evalue].to_f > current_row[:evalue].to_f
+      clean_seqs[seqid] = current_row
+    end
+
+  elsif seq_is_in_contaminated
+
+    #Seqs go into clean when they have one hit that's not in the contaminated filter
+    if kingdom_is_in_contaminated
+      #Make sure the seq in the hash has the lower evalue
+      if contaminated_seqs[seqid][:evalue].to_f > current_row[:evalue].to_f
+        contaminated_seqs[seqid] = current_row
+      end
+    else
+      #One hit is not contaminated, move to clean seqs
+      if contaminated_seqs[seqid][:evalue].to_f >= current_row[:evalue].to_f
+        clean_seqs[seqid] = current_row
+      else
+        clean_seqs[seqid] = contaminated_seqs[seqid]
+      end
+      #Remove row from the list of contaminated seqs
+      contaminated_seqs.delete(seqid)
+    end
+
+  else
+
+    #This should never happen
+    puts "Something went wrong..."
+    exit
+    
+  end
+  
+end
+
+#make sure that the set of contaminated and clean seqs does not overlap
+unless (clean_seqs.keys & contaminated_seqs.keys).empty?
+  puts "Something went wrong!"
+  exit
+end
+
+#Output
+contaminated = INSTALLED_CSV.open(settings[:contaminated_file], "w", {
+                          :col_sep => ";",
+                          :headers => csv_header,
+                          :write_headers => true})
+
+clean = INSTALLED_CSV.open(settings[:clean_file], "w", {
+                   :col_sep => ";",
+                   :headers => csv_header,
+                   :write_headers => true})
+
+clean_seqs.each_value {|row| clean << row }
+contaminated_seqs.each_value {|row| contaminated << row }
+
+input.close
+clean.close
+contaminated.close
