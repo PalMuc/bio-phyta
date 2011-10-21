@@ -1,3 +1,4 @@
 query sequence id;hit accession number;sgi;evalue;species;subject annotation;subject score;kingdom
 AW3C1;ACR38454;238014838;3.34982954962278e-19;Zea mays;unknown;78.5665508561758;Viridiplantae
+AW5C3;XP_001629010;156372369;1.85315736381546e-10;Nematostella vectensis;predicted protein;66.2401644268205;Alveolata
 AW5C4;XP_001629010;156372369;1.85315736381546e-09;Nematostella vectensis;predicted protein;66.2401644268205;Parabasalia

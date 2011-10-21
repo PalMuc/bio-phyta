@@ -4,6 +4,12 @@ class KingdomDB
 
   ROOT_ID = "1"
   SCIENTIFIC_NAME = "scientific name"
+  DEFAULT_FILTER = [
+                                          "Bacteria",
+                                          "Archaea",
+                                          "Viruses",
+                                          "NONE"
+                                         ]
 
   def initialize(server, user, password, database)
     
@@ -26,7 +32,7 @@ class KingdomDB
     @filter_hit_cache = {}
     
   end
-  
+    
   def id_from_name(taxon_name)
     db_results = @database[:names].select(:taxonid, :class).filter(:name => taxon_name).all
 

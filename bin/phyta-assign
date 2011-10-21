@@ -13,6 +13,7 @@ opts = Trollop::options do
   opt :database_user, "Optional: The name of the database user", :type => String, :default => "root", :short => "-u"
   opt :database_password, "Optional: The password of the database user", :type => String, :default => "no password", :short => "-p"
   opt :database_name, "Optional: The name of the NCBI taxonomy database", :type => String, :default => "kingdom_assignment_taxonomy", :short => "-n"
+  opt :filter, "A file in YAML format containing a list of taxa to be considered contaminants", :type => String, :default => "Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, visit https://github.com/PalMuc/bio-phyta/wiki/Custom-filters ", :short => "-f"
 end
 
 unless opts[:input_file_given] && opts[:output_file_given]
@@ -35,6 +36,7 @@ end
 require 'sequel'
 require 'nokogiri'
 require 'bio'
+require 'yaml'
 
 require 'csv'
 
@@ -56,6 +58,26 @@ PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
 puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
 
 puts "Settings: " + opts.inspect
+
+filter_array = nil
+
+if opts[:filter_given]
+  begin
+    filter_array = YAML::load(File.open(opts[:filter], 'r'))
+  rescue ArgumentError => e
+    puts "Error: #{e.message}"
+    puts e.backtrace.join("\n")
+    puts "Please see https://github.com/PalMuc/bio-phyta/wiki/Custom-filters for instructions on how to write filters"
+    abort
+  end
+  
+  unless filter_array.is_a? Array
+    puts "Error: Invalid filter format.\nPlease see https://github.com/PalMuc/bio-phyta/wiki/Custom-filters for instructions on how to write filters"
+    abort
+  end
+else
+  filter_array = KingdomDB::DEFAULT_FILTER
+end
 
 #Initialize auxiliary classes
 
@@ -84,36 +106,6 @@ output = INSTALLED_CSV.open(opts[:output_file], "w", {
                               :col_sep => ";",
                               :headers => ["query sequence id", "hit accession number", "sgi", "evalue", "species", "subject annotation", "subject score", "kingdom"],
                               :write_headers => true})
-
-filter_array = [
-                "Bacteria",
-                "Archaea",
-                "Viridiplantae",
-                "Rhodophyta",
-                "Glaucocystophyceae",
-                "Alveolata",
-                "Cryptophyta",
-                "stramenopiles", #<- Change
-                "Amoebozoa",
-                "Apusozoa",
-                "Euglenozoa",
-                "Fornicata",
-                "Haptophyceae",
-                "Heterolobosea",
-                "Jakobida",
-                "Katablepharidophyta",
-                "Malawimonadidae",
-                "Nucleariidae",
-                "Oxymonadida",
-                "Parabasalia",
-                "Rhizaria",
-                "unclassified eukaryotes",
-                "Fungi",
-                "Metazoa",
-                "Choanoflagellida",
-                "Opisthokonta incertae sedis", #"Fungi/Metazoa incertae sedis"
-                "Viruses"
-               ]
 
 filter_hash = db.get_filter(filter_array)
 

@@ -2,8 +2,8 @@ query sequence id;hit accession number;sgi;evalue;species;subject annotation;sub
 AW3C1;ACR38454;238014838;3.34982954962278e-19;Zea mays;unknown;78.5665508561758;Viridiplantae
 AW3C1;XP_002489117;253761439;1.33094019753946e-18;Sorghum bicolor;hypothetical protein SORBIDRAFT_0057s002150;76.6405529765891;Viridiplantae
 AW3C1;XP_002488963;253760039;1.23820662046332e-15;Sorghum bicolor;hypothetical protein SORBIDRAFT_1150s002010;66.6253640027379;Viridiplantae
-AW5C3;XP_001629010;156372369;1.85315736381546e-09;Nematostella vectensis;predicted protein;66.2401644268205;Metazoa
-AW5C3;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Alveolata
+AW5C3;XP_001629010;156372369;1.85315736381546e-10;Nematostella vectensis;predicted protein;66.2401644268205;Alveolata
+AW5C3;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Porifera
 AW5C3;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Apusozoa
 AW5C4;XP_001629010;156372369;1.85315736381546e-09;Nematostella vectensis;predicted protein;66.2401644268205;Parabasalia
 AW5C4;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Alveolata
