@@ -1,9 +1,22 @@
 #!/usr/bin/env ruby
 
 require 'rubygems'
+require 'trollop'
 require 'csv' #Will use FasterCSV on Ruby 1.8
 
 SCRIPT_NAME = "phyta-split"
+
+#parse command line arguments
+opts = Trollop::options do
+  opt :input_file, "The output of phyta-assign in CSV format", :type => String
+  opt :output_clean, "The name of the clean output table in CSV format", :type => String, :default => "[name_of_input_file]_clean.csv", :short => "-c"
+  opt :output_contaminated, "The name of the contaminated output table in CSV format", :type => String, :default => "[name_of_input_file]_contaminated.csv", :short => "-d"
+end
+
+unless opts[:input_file_given]
+  puts "Invalid arguments, see --help for more information."
+  abort
+end
 
 # $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
@@ -20,46 +33,73 @@ rootpath = File.dirname(File.dirname(__FILE__))
 PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
 puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
 
-unless ARGV.size == 1
-  puts "Usage: #{SCRIPT_NAME} input.csv"
-  puts "This will automatically create input_clean.csv and input_contaminated.csv in the same directory."
-  exit
-end
-
-#Command line arguments
-settings = {}
-settings[:input_file] =  ARGV.shift
-
 #Set up output file
-fullpath = File.expand_path(settings[:input_file])
+fullpath = File.expand_path(opts[:input_file])
 suffix = File.extname(fullpath)
 dirname = File.dirname(fullpath)
 name = File.basename(fullpath, suffix)
 
-settings[:contaminated_file] = dirname + "/" + name + "_contaminated.csv"
-settings[:clean_file] = dirname + "/" + name + "_clean.csv"
+unless opts[:output_clean_given]
+  opts[:output_clean] = dirname + "/" + name + "_clean.csv"
+end
+
+unless opts[:output_contaminated_given]
+  opts[:output_contaminated] = dirname + "/" + name + "_contaminated.csv"
+end
+
 
 csv_header = ["query sequence id", "hit accession number", "sgi", "evalue", "species", "subject annotation", "subject score", "kingdom"]
 
 #Open input file
-if !File.file?(settings[:input_file])
-  puts "No input file at " + File.expand_path(settings[:input_file]) + "!"
+if !File.file?(opts[:input_file])
+  puts "No input file at " + File.expand_path(opts[:input_file]) + "!"
   exit
 end
-input = INSTALLED_CSV.open(settings[:input_file], "r", {
+input = INSTALLED_CSV.open(opts[:input_file], "r", {
                    :col_sep => ";",
                    :headers => :first_row,
                    :header_converters => :symbol})
 
 clean_seqs = {}
 contaminated_seqs = {}
-contaminated_filter = [
+#TODO make sure filters are consistent
+old_contaminated_filter = [
                        "Bacteria",
                        "Archaea",
                        "Viruses",
                        "NONE"
                        #TODO is this all?
                       ]
+
+contaminated_filter = [
+                "Bacteria",
+                "Archaea",
+                "Viridiplantae",
+                "Rhodophyta",
+                "Glaucocystophyceae",
+                "Alveolata",
+                "Cryptophyta",
+                "stramenopiles", #<- Change
+                "Amoebozoa",
+                "Apusozoa",
+                "Euglenozoa",
+                "Fornicata",
+                "Haptophyceae",
+                "Heterolobosea",
+                "Jakobida",
+                "Katablepharidophyta",
+                "Malawimonadidae",
+                "Nucleariidae",
+                "Oxymonadida",
+                "Parabasalia",
+                "Rhizaria",
+                "unclassified eukaryotes",
+                "Fungi",
+                "Metazoa",
+                "Choanoflagellida",
+                "Opisthokonta incertae sedis", #"Fungi/Metazoa incertae sedis"
+                "Viruses"
+               ]
 
 warning = false;
 
@@ -140,12 +180,12 @@ unless (clean_seqs.keys & contaminated_seqs.keys).empty?
 end
 
 #Output
-contaminated = INSTALLED_CSV.open(settings[:contaminated_file], "w", {
+contaminated = INSTALLED_CSV.open(opts[:output_contaminated], "w", {
                           :col_sep => ";",
                           :headers => csv_header,
                           :write_headers => true})
 
-clean = INSTALLED_CSV.open(settings[:clean_file], "w", {
+clean = INSTALLED_CSV.open(opts[:output_clean], "w", {
                    :col_sep => ";",
                    :headers => csv_header,
                    :write_headers => true})
