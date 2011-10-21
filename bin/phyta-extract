@@ -19,54 +19,58 @@ def table_to_set(table, header)
   return result
 end
 
+require 'rubygems'
+require 'csv'
+require 'set'
+require 'bio'
+require 'trollop'
+
 #parse command line arguments
-settings = {}
-unless ARGV.size == 5
-  puts "Usage: kingdom-extraction sequences.fasta clean.csv contaminated.csv clean_output.fasta contaminated_output.fasta"
-  exit
+opts = Trollop::options do
+  opt :fasta, "The file containing the sequences in FASTA format", :type => String
+  opt :input_clean, "The name of the clean sequence table in CSV format", :type => String
+  opt :input_contaminated, "The name of the contaminated sequence table in CSV format", :type => String, :short => "-d"
+
+  opt :output_clean, "The name of the FASTA file where clean sequences will be written to", :type => String, :short => "-o"
+  opt :output_contaminated, "The name of the FASTA file where contaminated sequences will be written to", :type => String, :short => "-p"
+end
+
+unless opts[:fasta_given] && opts[:input_clean_given] && opts[:input_contaminated_given] && opts[:output_clean_given] && opts[:output_contaminated_given]
+  puts "Invalid arguments, see --help for more information."
+  abort
 end
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-require 'rubygems'
-require 'csv'
-require 'set'
-require 'bio'
-
 rootpath = File.dirname(File.dirname(__FILE__))
 PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
 puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
 
-settings[:input_fasta] = ARGV.shift
-settings[:input_clean] = ARGV.shift
-settings[:input_contaminated] = ARGV.shift
-settings[:output_clean] = ARGV.shift
-settings[:output_contaminated] = ARGV.shift
+opts[:fasta] = ARGV.shift
+opts[:input_clean] = ARGV.shift
+opts[:input_contaminated] = ARGV.shift
+opts[:output_clean] = ARGV.shift
+opts[:output_contaminated] = ARGV.shift
 
-unless File.exists?(settings[:input_fasta])
-  puts "The input file at " + File.expand_path(settings[:input_fasta]) + " could not be opened!"
-  exit
+unless File.exists?(opts[:fasta])
+  abort "The input file at " + File.expand_path(opts[:fasta]) + " could not be opened!"
 end
 
-unless File.exists?(settings[:input_clean])
-  puts "The input file at " + File.expand_path(settings[:input_clean]) + " could not be opened!"
-  exit
+unless File.exists?(opts[:input_clean])
+  abort "The input file at " + File.expand_path(opts[:input_clean]) + " could not be opened!"
 end
 
-unless File.exists?(settings[:input_contaminated])
-  puts "The input file at " + File.expand_path(settings[:input_contaminated]) + " could not be opened!"
-  exit
+unless File.exists?(opts[:input_contaminated])
+  abort "The input file at " + File.expand_path(opts[:input_contaminated]) + " could not be opened!"
 end
 
-if File.exists?(settings[:output_clean])
-  puts "The input file at " + File.expand_path(settings[:output_clean]) + " already exists!"
-  exit
+if File.exists?(opts[:output_clean])
+  abort "The input file at " + File.expand_path(opts[:output_clean]) + " already exists!"
 end
 
-if File.exists?(settings[:output_contaminated])
-  puts "The input file at " + File.expand_path(settings[:output_contaminated]) + " already exists!"
-  exit
+if File.exists?(opts[:output_contaminated])
+  abort "The input file at " + File.expand_path(opts[:output_contaminated]) + " already exists!"
 end
 
 #CSV backwards compatibility
@@ -79,23 +83,23 @@ end
 
 #Open output of Kingdom-Splitter, save clean and contaminated sequence ids in two sets
 puts "Reading clean..."
-clean_table = INSTALLED_CSV.open(settings[:input_clean], "r", { :col_sep => ";", :headers => :first_row, :header_converters => :symbol})
+clean_table = INSTALLED_CSV.open(opts[:input_clean], "r", { :col_sep => ";", :headers => :first_row, :header_converters => :symbol})
 clean = table_to_set(clean_table, :query_sequence_id)
 clean_table.close
 
 puts "Reading contaminated..."
-contaminated_table = INSTALLED_CSV.open(settings[:input_contaminated], "r", { :col_sep => ";", :headers => :first_row, :header_converters => :symbol})
+contaminated_table = INSTALLED_CSV.open(opts[:input_contaminated], "r", { :col_sep => ";", :headers => :first_row, :header_converters => :symbol})
 contaminated = table_to_set(contaminated_table, :query_sequence_id)
 contaminated_table.close
 
 #Initialize output files
-clean_out = File.open(settings[:output_clean], "w")
-contaminated_out = File.open(settings[:output_contaminated], "w")
+clean_out = File.open(opts[:output_clean], "w")
+contaminated_out = File.open(opts[:output_contaminated], "w")
 
 puts "Extracting FASTA sequences..."
 QUERY_SEQ_REGEXP = /\A(\S+)\s.*\z/ #Make sure this is exactly the same as in BlastStringParser in Kingdom-Assignment
 
-sequences = Bio::FastaFormat.open(settings[:input_fasta])
+sequences = Bio::FastaFormat.open(opts[:fasta])
 sequences.each do |entry|
   current = QUERY_SEQ_REGEXP.match(entry.definition)[1] #TODO do something when this comparison fails
   if clean.include?(current)
