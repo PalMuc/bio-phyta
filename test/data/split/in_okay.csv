@@ -1,0 +1,4 @@
+query sequence id;hit accession number;sgi;evalue;species;subject annotation;subject score;kingdom
+AW5C3;XP_001629010;156372369;1.85315736381546e-09;Nota contamination;predicted protein;66.2401644268205;Porifera
+AW5C3;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Alveolata
+AW5C3;XP_001629010;156372369;1.85315736381546e-09;Madeup name;predicted protein;66.2401644268205;Apusozoa
