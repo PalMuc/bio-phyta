@@ -12,7 +12,7 @@ opts = Trollop::options do
   opt :input_file, "The output of phyta-assign in CSV format", :type => String
   opt :output_clean, "The name of the clean output table in CSV format", :type => String, :default => "[name_of_input_file]_clean.csv", :short => "-c"
   opt :output_contaminated, "The name of the contaminated output table in CSV format", :type => String, :default => "[name_of_input_file]_contaminated.csv", :short => "-d"
-  opt :filter, "A file in YAML format containing a list of taxa to be considered contaminants", :type => String, :default => "Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, visit https://github.com/PalMuc/bio-phyta/wiki/Custom-filters ", :short => "-f"
+  opt :filter, "Optional: A file in YAML format containing a list of taxa to be considered contaminants", :type => String, :default => "Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, visit https://github.com/PalMuc/bio-phyta/wiki/Custom-filters ", :short => "-f"
 end
 
 unless opts[:input_file_given]
