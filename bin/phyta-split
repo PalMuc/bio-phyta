@@ -56,7 +56,7 @@ filter_array = nil
 if opts[:filter_given]
   begin
     filter_array = YAML::load(File.open(opts[:filter], 'r'))
-  rescue ArgumentError => e
+  rescue Exception => e
     puts "Error: #{e.message}"
     puts e.backtrace.join("\n")
     puts "Please see https://github.com/PalMuc/bio-phyta/wiki/Custom-filters for instructions on how to write filters"
