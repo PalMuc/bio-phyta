@@ -28,7 +28,7 @@ require 'trollop'
 #parse command line arguments
 opts = Trollop::options do
   opt :fasta, "The file containing the sequences in FASTA format", :type => String
-  opt :input_clean, "The name of the clean sequence table in CSV format", :type => String
+  opt :input_clean, "The name of the clean sequence table in CSV format", :type => String, :short => "-c"
   opt :input_contaminated, "The name of the contaminated sequence table in CSV format", :type => String, :short => "-d"
 
   opt :output_clean, "The name of the FASTA file where clean sequences will be written to", :type => String, :short => "-o"
@@ -46,12 +46,6 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 rootpath = File.dirname(File.dirname(__FILE__))
 PHYTA_VERSION = File.new(File.join(rootpath,'VERSION')).read.chomp
 puts "Running #{SCRIPT_NAME} #{PHYTA_VERSION}"
-
-opts[:fasta] = ARGV.shift
-opts[:input_clean] = ARGV.shift
-opts[:input_contaminated] = ARGV.shift
-opts[:output_clean] = ARGV.shift
-opts[:output_contaminated] = ARGV.shift
 
 unless File.exists?(opts[:fasta])
   abort "The input file at " + File.expand_path(opts[:fasta]) + " could not be opened!"
