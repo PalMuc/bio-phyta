@@ -37,7 +37,7 @@ An example output file could look like this:
     AW3C1;XP_002488963;253760039;1.23820662046332e-15;Sorghum bicolor;hypothetical protein SORBIDRAFT_1150s002010;66.6253640027379;Viridiplantae
     AW5C3;XP_001629010;156372369;1.85315736381546e-09;Nematostella vectensis;predicted protein;66.2401644268205;Metazoa
 
-As you see the first three entries are the three best BLAST hits for the query sequence AW3C1. They all get assigned to the Phylum Viridiplantae. The second query sequence only has one hit from the species *Nematostella vectensis* which gets assigned to the Kingdom Metazoa.
+As you see the first three entries are the three best BLAST hits for the query sequence AW3C1. They all get assigned to the Phylum Viridiplantae. The second query sequence only has one hit from the species <i>Nematostella vectensis</i> which gets assigned to the Kingdom Metazoa.
 
 The higher rank taxonomy is assigned based on species name acquired from the hit gi number and NCBI taxonomy information.  In order to acquire taxonomy information from the gi number, a call to the NCBI webserver will be made. phyta-assign uses the following list of the higher rank taxonomical groups:
 
@@ -57,21 +57,21 @@ In a combination with phyta-split, phyta-assign can be used for detecting contam
 
 Phyta-assign takes the following command line arguments:
 
-[--input-file, -i] The output of the BLASTplus alignment in XML format
+[\--input-file, -i] The output of the BLASTplus alignment in XML format
 
-[--output-file, -o]   The name of the output table in CSV format
+[\--output-file, -o]   The name of the output table in CSV format
 
-[--database-server, -d] Optional: The address of the MySQL database server (default: localhost)
+[\--database-server, -d] Optional: The address of the MySQL database server (default: localhost)
 
-[--database-user, -u] Optional: The name of the database user (default: root)
+[\--database-user, -u] Optional: The name of the database user (default: root)
 
-[--database-password, -p] Optional: The password of the database user (default: no password)
+[\--database-password, -p] Optional: The password of the database user (default: no password)
 
-[--database-name, -n] Optional: The name of the NCBI taxonomy database (default: kingdom_assignment_taxonomy)
+[\--database-name, -n] Optional: The name of the NCBI taxonomy database (default: kingdom_assignment_taxonomy)
 
-[--filter, -f] A file in YAML format containing a list of taxa to be considered contaminants (default: Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, see the section "Custom filters".
+[\--filter, -f] A file in YAML format containing a list of taxa to be considered contaminants (default: Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, see the section "Custom filters".
 
-[--help, -h] Show a help message
+[\--help, -h] Show a help message
 
 == phyta-split
 
@@ -138,7 +138,7 @@ installed:
 * cURL
 * MySQL
  
-In the following, the installation procedure is given for **Mac OS X** and **Ubuntu Linux 10.10**. The commands for Ubuntu also have been tested to work for **Debian Squeeze** although you should substitute apt-get by aptitude.
+In the following, the installation procedure is given for <b>Mac OS X</b> and <b>Ubuntu Linux 10.10</b>. The commands for Ubuntu also have been tested to work for <b>Debian Squeeze</b> although you should substitute apt-get by aptitude.
 
 
 === Installing Git
@@ -200,7 +200,8 @@ Now save the file, close your editor and close your shell. Start a new shell and
 If you see something like "rvm is a function" the installation was
 successful. If you run into problems, read the {documentation}[http://rvm.beginrescueend.com/rvm/install/].
 
-**The following command is not part of the installation procedure!**
+<b>The following command is not part of the installation procedure!</b>
+
 You can always delete RVM and start from scratch by typing:
 
     rvm implode
@@ -252,6 +253,7 @@ Now add the following lines at the end:
 Refer to the ReadMe file that comes with the MySQL installer if you are using tclsh instead of bash.
 
 === Starting the database
+
 Usually the MySQL setup creates an administrator account named "root" with
 an empty password. If your administrator name is different or you have
 set a password, you must adjust the commands in the next section accordingly.
@@ -260,7 +262,30 @@ You can now start MySQL by typing
     sudo service mysql start
 
 == phyta-setup-taxonomy-db
-PhyTA comes with the program phyta-setup-taxonomy-db that will help you set up the NCBI taxonomy database.
+
+First, you need to set up an empty database for the NCBI taxonomy data. This can be achieved by typing:
+
+    mysql -u root -p password -e "CREATE DATABASE kingdom_assignment_taxonomy"
+
+In this example, substitute root for your MySQL username, password for your password and kingdom_assignment_taxonomy for the database name. Leave out the parameter -p if your database does not have a password.
+
+After that, the program phyta-setup-taxonomy-db will help you set up the NCBI taxonomy database. Its command line options are the following.
+
+[\--database-server, -d]   Optional: The address of the MySQL database server (default: localhost)
+
+[\--database-user, -u]   Optional: The name of the database user (default: root)
+
+[\--database-password, -p]   Optional: The password of the database user (default: no password)
+
+[\--database-name, -n]   Optional: The name of the NCBI taxonomy database (default: kingdom_assignment_taxonomy)
+
+[\--help, -h]   Show a help message
+
+Here is an example command consistent with the example above:
+
+    phyta-setup-taxonomy-db -d localhost -u root -p password -n kingdom_assignment_taxonomy
+
+Phyta-setup-taxonomy-db will now download the NCBI taxonomy dump files and load them into your MySQL database. This might take a while.    
 
 == Contributing to bio-phyta
  
