@@ -240,13 +240,13 @@ Please note that this will delete all versions of Ruby you installed with RVM as
 
 Now you can install Ruby by calling:
     
-    rvm install ruby
+    rvm install 1.9.2
     
 Please note that everything RVM installs is placed in the folder .rvm in your home directory. Therefore, it is not necessary to use sudo when calling rvm.
 
 In order to use Ruby instead of your system's Ruby version you must type
     
-    rvm use ruby
+    rvm use 1.9.2
     
 every time you open a new shell. You can check which version you are currently using with:
 
@@ -258,9 +258,9 @@ If you want to switch back to the version of Ruby that came with your system, ty
     
 In order to use Ruby as the default Ruby implementation on your system you can type:
 
-    rvm --default use ruby
+    rvm --default use 1.9.2
     
-Now Ruby will be called when you type ruby in a new shell.
+Now Ruby 1.9.2 will be called when you type ruby in a new shell.
 
 === Installing MySQL
 PhyTA uses a MySQL database in order to store information from the {NCBI taxonomy database}[ftp://ftp.ncbi.nih.gov/pub/taxonomy/] efficiently.
@@ -329,7 +329,11 @@ Phyta-setup-taxonomy-db will now download the NCBI taxonomy dump files and load 
 
 == Copyright
 
-Copyright (c) 2011 Philipp Comans. See LICENSE.txt for further details.
+Copyright (c) 2011 Philipp Comans.
+
+The MySQL schema used in phyta-setup-taxonomy-db and phyta-assign has been developed by Matthew Horton of the the Department of Ecology and Evolution of the Division of Biological Sciences at the University of Chicago and is available at http://bergelson.uchicago.edu/Members/mhorton/taxonomydb.build .
+
+See LICENSE.txt for further details.
 
 == Acknowledgements
 Development of this program was supported by the {Molecular Geo- and Palaeobiology Lab}[http://www.mol-palaeo.de/] of the Department of Earth and Environmental Sciences and the initiative "{Gleichstellung in Forschung und Lehre}[http://www.frauenbeauftragte.uni-muenchen.de/foerdermoegl/lmu1/tg73/index.html]" of the Ludwig-Maximilians-University Munich (LMU).
