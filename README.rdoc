@@ -15,6 +15,12 @@ Their function is explained in the following sections.
 
 All tools in PhyTA are written in Ruby 1.8.7 and are delivered as a Ruby gem. PhyTA has been tested with MRI 1.8.7 and 1.9.2.
 
+To install PhyTA simply type:
+
+    sudo gem install bio-phyta
+
+PhyTA requires Ruby 1.8.7 or higher and a MySQL database. See the section called "Installation" for more information.
+
 == phyta-assign
 
 Phyta-assign is a tool to parse the NCBI BLASTplus XML format output and store attributes of BLASTplus in tabular form as a CSV file.
