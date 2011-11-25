@@ -259,7 +259,7 @@ Now Ruby will be called when you type ruby in a new shell.
 === Installing MySQL
 PhyTA uses a MySQL database in order to store information from the {NCBI taxonomy database}[ftp://ftp.ncbi.nih.gov/pub/taxonomy/] efficiently.
 
-The database does not have to be hosted on the system that is running Kingdom Assignment, but it is advantageous for performance reasons.
+The database does not have to be hosted on the system that is running PhyTA, but it is advantageous for performance reasons.
 
 The correct installation procedure for MySQL varies widely among different platforms. For many systems (like Mac OS X) binaries can be obtained from the {official website}[http://www.mysql.com/downloads/mysql/]. In the following, the setup under Ubuntu 10.10 is explained.
 
