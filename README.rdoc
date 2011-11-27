@@ -17,7 +17,7 @@ All PhyTA scripts are written in Ruby 1.8.7 and are delivered as a Ruby gem. Phy
 
 To install PhyTA simply type:
 
-    sudo gem install bio-phyta
+    gem install bio-phyta
 
 PhyTA requires Ruby 1.8.7 or higher and a MySQL database. See the "Installation" section for more information.
 
