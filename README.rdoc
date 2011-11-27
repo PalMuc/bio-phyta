@@ -1,6 +1,6 @@
 = bio-phyta
 
-PhyTA is a BioRuby program specifically designed for preparing EST data for their analyses with automated phylogenetic pipelines. PhyTA assigns a higher taxonomical rank to EST sequences based on their BLAST annotation, performs taxonomy-based sequence sorting and constructs a contamination-free sub-library.
+PhyTA is a BioRuby program specifically designed for identifying and removing from Expressed Sequence Tag data contaminant sequences from other (non-target) species. PhyTA assigns a higher taxonomic rank to EST sequences based on their BLAST annotation, performs taxonomy-based sequence sorting and constructs a contamination-free sub-library.
 It consists of the following tools:
 
 [phyta-assign] Is in charge of the higher taxonomic rank sequence annotation.
@@ -11,30 +11,37 @@ It consists of the following tools:
 
 [phyta-setup-taxonomy-db] Facilitates setting up a local copy of the NCBI taxonomy database.
 
-Their function is explained in the following sections.
+The detailed description of these tool's function is provided below.
 
-All tools in PhyTA are written in Ruby 1.8.7 and are delivered as a Ruby gem. PhyTA has been tested with MRI 1.8.7 and 1.9.2.
+All PhyTA scripts are written in Ruby 1.8.7 and are delivered as a Ruby gem. PhyTA has been tested with MRI 1.8.7 and 1.9.2.
 
 To install PhyTA simply type:
 
     sudo gem install bio-phyta
 
-PhyTA requires Ruby 1.8.7 or higher and a MySQL database. See the section called "Installation" for more information.
+PhyTA requires Ruby 1.8.7 or higher and a MySQL database. See the "Installation" section for more information.
 
 == phyta-assign
 
-Phyta-assign is a tool to parse the NCBI BLASTplus XML format output and store attributes of BLASTplus in tabular form as a CSV file.
+phyta-assignparses the NCBI BLASTplus XML format output, assigns a higher taxonomic rank to ESTs based on the BLAST annotation  and stores attributes of BLASTplus and the taxonomy assignments in tabular form as a CSV file.
+To generate an input for phyta-assign, a large set of query sequences is compared to an NCBI database standard stand-alone or network-client BLASTplus programs.
 
-The output of phyta-assign provides the following information:
+An example the BLASTplus command for generating input for phyta-assign is:
 
-1. Query sequence id
-1. Hit accession number
-1. sgi
-1. Hit evalue
-1. Hit species name
-1. Hit subject annotation
-1. Subject score
-1. Higher rank taxonomy
+    blastx -query Corticium_candelabrum.fasta -db BLASTDB/nr -evalue 0.0001 -max_target_seqs 3 -out Corticium_candelabrum_blast5.xml -outfmt 5
+
+where the blast5.xml file can be used as an input for phyta-assign.
+
+The output of phyta-assign contains:
+
+1. Query sequence ID and the following information for the three top BLAST hits:
+2. accession number
+3. sgi
+4. e-value
+5. species name
+6. subject annotation
+7. Subject score
+8. Higher rank (e.g. Kingdom) taxonomy information
 
 An example output file could look like this:
 
@@ -45,19 +52,7 @@ An example output file could look like this:
 
 As you see the first three entries are the three best BLAST hits for the query sequence AW3C1. They all get assigned to the Phylum Viridiplantae. The second query sequence only has one hit from the species <i>Nematostella vectensis</i> which gets assigned to the Kingdom Metazoa.
 
-The higher rank taxonomy is assigned based on species name acquired from the hit gi number and NCBI taxonomy information.  In order to acquire taxonomy information from the gi number, a call to the NCBI webserver will be made. phyta-assign uses the following list of the higher rank taxonomical groups:
-
-    Bacteria, Archaea, Viruses, NONE
-
-In order to customize this filter, see the section "Custom filters".
-
-Phyta-assign provides an annotation tool for large sets of query sequences that have been simultaneously compared against a NCBI database with any of the standard stand-alone or network-client BLAST+ programs.
-
-An example command for generating input for phyta-assign is:
-
-    blastx -query my.fasta -db BLASTDB/nr -evalue 0.0001 -max_target_seqs 3 -out my_blast5.xml -outfmt 5
-
-In a combination with phyta-split, phyta-assign can be used for detecting contaminations is Expressed Sequence Tag (EST) and genomic DNA libraries and preparing a contamination-free datasets (e.g. for phylogenetic analysis).
+The higher rank taxonomy is assigned based on species name acquired from the hit gi number and NCBI taxonomy information. The default list of the higher rank taxonomic groups used by phyta-assign is provided in the built-in Taxonomy filter  I. The default taxonomy list and instructions for creating a custom filter are provided below in the section "Custom filters".
 
 === Usage
 
@@ -75,15 +70,17 @@ Phyta-assign takes the following command line arguments:
 
 [\--database-name, -n] Optional: The name of the NCBI taxonomy database (default: kingdom_assignment_taxonomy)
 
-[\--filter, -f] A file in YAML format containing a list of taxa to be considered contaminants (default: Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, see the section "Custom filters".
+[\--filter, -f] A file in YAML format containing a list of the higher rank taxonomic groups The default filter information and instructions for creating your own filters can be found in  the section "Custom filters".
 
 [\--help, -h] Show a help message
 
+Here is an example for how phyta-assign is used from the command line:
+
+    phyta-assign -i Corticium_candelabrum_blast5.xml -o Corticium_candelabrum_blast5_annotated.csv -d localhost -u root -p password -n kingdom_assignment_taxonomy -f default_filter.yaml
+
 == phyta-split
 
-Phyta-split is designed to sort out bacterial, archaeal and viral contaminations from eukaryotic Expressed Sequence Tag (EST) and genomic data.
-
-The tool uses CSV files generated by phyta-assign as input. This input file is split into two new CSV files. The first file contains all sequences that are deemed to belong to eukaryotic organisms according to a set of rules that can be customized by the user. The second file contains all sequences that are deemed to be prokaryotic or viral contaminations.
+Phyta-split takes the CSV file  generated by phyta-assign as input, performs taxonomy-based sorting of the annotated ESTs and outputs two new files in CSV format. One file contains annotations for all ESTs that deemed to belong to the target-species. The second file contains annotations for those sequences  that received three top hits from taxa defined as contaminant by the phyta-split taxonomy filter.
 
 === Usage
 
@@ -93,13 +90,17 @@ The tool uses CSV files generated by phyta-assign as input. This input file is s
  
 [\--output-contaminated, -d ] The name of the contaminated output table in CSV format (default: [name_of_input_file]_contaminated.csv)
  
-[\--filter, -f ] A file in YAML format containing a list of taxa to be considered contaminants (default: Use builtin filter capturing Bacteria, Archaea, Viruses and NONE. To learn how to write your own filters, visit https://github.com/PalMuc/bio-phyta/wiki/Custom-filters)
+[\--filter, -f ] A file in YAML format containing a list of taxa to be considered contaminants (default: Use builtin filter capturing Bacteria, Archaea, Viruses and NONE (unidentified species).
  
 [\--help, -h] Show a help message
 
+Here is an example for how phyta-split can be used from the command line. Note that no custom filter is used, so only the taxa "Bacteria", "Archaea", "Viruses" and "NONE" will be considered contaminations.
+
+    phyta-split -i Corticium_candelabrum_blast5_annotated.csv -c Corticium_candelabrum_clean.csv -d Corticium_candelabrum_contaminated.csv
+
 === Rules
 
-Sequences go into the clean eukaryotic subset when at least one of their three best BLAST hits does not match the contamination filter. Right now, this filter contains the NCBI taxonomies Bacteria, Archaea, Viruses and NONE, which represents {unknown sequences}[http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Undef&id=12908&lvl=3&keep=1&srchmode=1&unlock].
+Sequences are included into the "clean" target-species sub-library annotation when at least one of their three top BLAST hits does not match any taxa in the phyta-split contamination filter. The default filter provided with the program contains the  following taxonomic groups:  Bacteria, Archaea, Viruses and NONE, which represents {unknown sequences}[http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Undef&id=12908&lvl=3&keep=1&srchmode=1&unlock].
     
 == Custom filters
 
@@ -157,6 +158,10 @@ The output files will be written in FASTA format.
 
 [\--help, -h] Show a help message
 
+Here is an example for how phyta-extract can be used from the command line.
+
+    phyta-extract -f Corticium_candelabrum.fasta -c Corticium_candelabrum_clean.csv -d Corticium_candelabrum_contaminated.csv -o Corticium_candelabrum_clean.fasta -p Corticium_candelabrum_contaminated.fasta
+
 == Installation
 
 == Prerequisites
@@ -170,6 +175,7 @@ installed:
  
 In the following, the installation procedure is given for <b>Mac OS X</b> and <b>Ubuntu Linux 10.10</b>. The commands for Ubuntu also have been tested to work for <b>Debian Squeeze</b> although you should substitute apt-get by aptitude.
 
+Please note that in order to use the sudo command, your user account must allowed to acquire root user privileges if this is not the case, please ask your administrator.
 
 === Installing Git
 An installer for Mac OS X can be obtained from the [official website](http://git-scm.com/). For any Linux distribution it is recommended that you use your system's package manager to install Git. Look for a package called git or git-core. For Ubuntu 10.10 the command is:
@@ -193,7 +199,7 @@ The output of that command looks like that:
 If you have ruby 1.8.7 or higher, you're all set.
 If Ruby is not available on your system or if you have an older version, you should install the most recent version of Ruby.
 
-The easiest way to install the most recent version of Ruby is via the {Ruby Version Manager}[http://rvm.beginrescueend.com/] by Wayne E. Seguin.
+The easiest way to install the most recent version of Ruby is via the {Ruby Version Manager}[http://rvm.beginrescueend.com/] (RVM) by Wayne E. Seguin.
 
 Before you install RVM, make sure you have git and curl installed on your system.
 
