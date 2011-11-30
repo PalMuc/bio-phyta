@@ -13,7 +13,7 @@ class KingdomDB
 
   def initialize(server, user, password, database)
     
-    connect_string = 'mysql://'+ server + '/' + database + '?user=' + user
+    connect_string = 'mysql2://'+ server + '/' + database + '?user=' + user
 
     if !password.nil?
       connect_string = connect_string + '&password=' + password

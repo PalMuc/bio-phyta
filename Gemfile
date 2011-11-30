@@ -4,7 +4,7 @@ source "http://rubygems.org"
 
 # Runtime dependencies
 gem "bio", ">= 1.4.2"
-gem "mysql", ">= 2.8.1"
+gem "mysql2"
 # For JRuby: gem "mysql", "~> 2.8.1"
 gem "sequel", ">= 3.28.0"
 gem "fastercsv", ">= 1.5.4" # only for 1.8.7

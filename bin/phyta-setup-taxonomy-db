@@ -20,7 +20,7 @@ unless opts[:database_password_given]
 end
 
 #Connect to the target database
-connect_string = 'mysql://'+ opts[:database_server] + '/' + opts[:database_name] + '?user=' + opts[:database_user]
+connect_string = 'mysql2://'+ opts[:database_server] + '/' + opts[:database_name] + '?user=' + opts[:database_user]
 
 if !opts[:database_password].nil?
   connect_string = connect_string + '&password=' + opts[:database_password]
@@ -31,7 +31,7 @@ if RUBY_PLATFORM =~ /java/
   require 'jdbc/mysql'
   connect_string = 'jdbc:' + connect_string
 else
-  require 'mysql'
+  require 'mysql2'
 end
 
 PROTEIN_TABLE_NAME = 'proteinGiToTaxonId'

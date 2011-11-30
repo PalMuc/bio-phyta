@@ -30,7 +30,7 @@ if RUBY_PLATFORM =~ /java/
   puts "You are running JRuby, the jdbc/mysql database connector will be used."
   require 'jdbc/mysql'
 else
-  require 'mysql'
+  require 'mysql2'
 end
 
 require 'sequel'
