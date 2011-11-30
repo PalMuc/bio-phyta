@@ -54,7 +54,7 @@ ftp.login
 files = ftp.chdir('pub/taxonomy/')
 
 #Do the following in a temporary directory, automatically delete it afterwards
-Dir.mktmpdir("phyta", "/var/tmp") do |dir|
+Dir.mktmpdir() do |dir|
   Dir.chdir(dir)
 
   tax_dmp = 'taxdump.tar.gz'
@@ -119,11 +119,11 @@ database.run "TRUNCATE #{NAMES_TABLE_NAME}"
 database.run "TRUNCATE #{NODES_TABLE_NAME}"
 database.run "TRUNCATE #{PROTEIN_TABLE_NAME}"
 
-database.run "LOAD DATA INFILE '#{dir}/gi_taxid_prot.dmp' INTO TABLE #{PROTEIN_TABLE_NAME} FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' (gi,taxonid);"
+database.run "LOAD DATA LOCAL INFILE '#{dir}/gi_taxid_prot.dmp' INTO TABLE #{PROTEIN_TABLE_NAME} FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' (gi,taxonid);"
 
-database.run "LOAD DATA INFILE '#{dir}/names.dmp' INTO TABLE #{NAMES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, name, uniquename, class);"
+database.run "LOAD DATA LOCAL INFILE '#{dir}/names.dmp' INTO TABLE #{NAMES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, name, uniquename, class);"
 
-database.run "LOAD DATA INFILE '#{dir}/nodes.dmp' INTO TABLE #{NODES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, parenttaxonid,rank,embl_code,division_id,inherited_div_flag,genetic_code_id,inherited_gc_flag, mitochondrial_genetic_codeid,inherited_mgc_flag,genBank_hidden_flag,hidden_subtree_root_flag,comments);"
+database.run "LOAD DATA LOCAL INFILE '#{dir}/nodes.dmp' INTO TABLE #{NODES_TABLE_NAME} FIELDS TERMINATED BY '\t|\t' LINES TERMINATED BY '\t|\n' (taxonid, parenttaxonid,rank,embl_code,division_id,inherited_div_flag,genetic_code_id,inherited_gc_flag, mitochondrial_genetic_codeid,inherited_mgc_flag,genBank_hidden_flag,hidden_subtree_root_flag,comments);"
 
 end
 
