@@ -54,7 +54,7 @@ ftp.login
 files = ftp.chdir('pub/taxonomy/')
 
 #Do the following in a temporary directory, automatically delete it afterwards
-Dir.mktmpdir do |dir|
+Dir.mktmpdir("phyta", "/var/tmp") do |dir|
   Dir.chdir(dir)
 
   tax_dmp = 'taxdump.tar.gz'
