@@ -301,7 +301,7 @@ You can now start MySQL by typing
 
 First, you need to set up an empty database for the NCBI taxonomy data. This can be achieved by typing:
 
-    mysql -u root -p password -e "CREATE DATABASE kingdom_assignment_taxonomy"
+    mysql -u root -e "CREATE DATABASE kingdom_assignment_taxonomy"
 
 In this example, substitute root for your MySQL username, password for your password and kingdom_assignment_taxonomy for the database name. Leave out the parameter -p if your database does not have a password.
 
