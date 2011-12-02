@@ -63,7 +63,7 @@ Dir.mktmpdir() do |dir|
   begin
     ftp.getbinaryfile(tax_dmp, tax_dmp)
   rescue Net::FTPPermError => e
-    puts "Received #{e.message.strip}, trying FTP passive mode"
+    puts "Received #{e.message.strip}, trying again using FTP passive mode"
     ftp.passive = true
     ftp.getbinaryfile(tax_dmp, tax_dmp)
   end
