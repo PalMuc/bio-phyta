@@ -205,7 +205,7 @@ Before you install RVM, make sure you have git and curl installed on your system
 
 RVM can be installed by calling:
 
-    bash < <( curl http://rvm.beginrescueend.com/releases/rvm-install-head )
+    bash < <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
 
 This will install RVM to .rvm in your home folder and print several instructions specific to your platform on how to finish the installation. Please pay close attention to the "dependencies" section and look for the part where it says something like this:
 
@@ -275,7 +275,9 @@ The database does not have to be hosted on the system that is running PhyTA, but
 
 The correct installation procedure for MySQL varies widely among different platforms. For many systems (like Mac OS X) binaries can be obtained from the {official website}[http://www.mysql.com/downloads/mysql/]. In the following, the setup under Ubuntu 10.10 is explained.
 
-    sudo apt-get install mysql-server
+    sudo apt-get install mysql-server libmysqlclient-dev
+
+That should conclude the database setup under Ubuntu.
 
 On Mac OS X, you can install the MySQL preference pane and start the server from there. The MySQL binaries are at /usr/local/mysql/bin/. In order to be able to execute the following examples without having to prefix this path every time, you can add aliases to your bash configuration:
 
@@ -285,6 +287,7 @@ Now add the following lines at the end:
 
     alias mysql=/usr/local/mysql/bin/mysql
     alias mysqladmin=/usr/local/mysql/bin/mysqladmin
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/usr/local/mysql/lib/"
     
 Refer to the ReadMe file that comes with the MySQL installer if you are using tclsh instead of bash.
 
@@ -301,9 +304,11 @@ You can now start MySQL by typing
 
 First, you need to set up an empty database for the NCBI taxonomy data. This can be achieved by typing:
 
-    mysql -u root -e "CREATE DATABASE kingdom_assignment_taxonomy"
+    mysql -u root -ppassword -e "CREATE DATABASE kingdom_assignment_taxonomy"
 
-In this example, substitute root for your MySQL username, password for your password and kingdom_assignment_taxonomy for the database name. Leave out the parameter -p if your database does not have a password.
+In this example, substitute root for your MySQL username, password for your password and kingdom_assignment_taxonomy for the database name.
+
+Please note the lack of a space between the parameter p and the password. Leave this parameter out if your database does not have a password.
 
 After that, the program phyta-setup-taxonomy-db will help you set up the NCBI taxonomy database. Its command line options are the following.
 
