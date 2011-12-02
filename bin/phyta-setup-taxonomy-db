@@ -59,7 +59,15 @@ Dir.mktmpdir() do |dir|
 
   tax_dmp = 'taxdump.tar.gz'
   puts "Downloading #{tax_dmp}... "
-  ftp.getbinaryfile(tax_dmp, tax_dmp)
+
+  begin
+    ftp.getbinaryfile(tax_dmp, tax_dmp)
+  rescue Net::FTPPermError => e
+    puts "Received #{e.message}, trying FTP passive mode"
+    ftp.passive = true
+    ftp.getbinaryfile(tax_dmp, tax_dmp)
+  end
+  
   taxdump_md5 = ftp.gettextfile(tax_dmp + ".md5")
   #TODO validate checksum
   
